@@ -21,6 +21,7 @@
     "socket",
     "realtime"
   ],
+  "icon": "src/media/icon.png",
   "galleryBanner": {
     "color": "#C80000",
     "theme": "dark"
