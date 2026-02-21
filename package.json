@@ -1,0 +1,79 @@
+{
+  "name": "vscode-ws-client",
+  "displayName": "WebSocket Test Client",
+  "description": "WebSocket client for testing connections",
+  "version": "1.0.0",
+  "publisher": "walkway36",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers",
+    "Testing"
+  ],
+  "keywords": [
+    "websocket",
+    "ws",
+    "client",
+    "debug",
+    "test",
+    "socket",
+    "realtime"
+  ],
+  "galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/WALKWAY36/vscode-ws-client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/vscode-ws-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/vscode-ws-client/issues"
+  },
+  "activationEvents": [
+    "onCommand:ws-client.open"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ws-client.open",
+        "title": "WebSocket Client: Open Connection Panel"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "ws-client.open",
+        "key": "ctrl+shift+w",
+        "mac": "cmd+shift+w"
+      }
+    ],
+    "configuration": {
+      "title": "WebSocket Client",
+      "properties": {
+        "wsClient.urlHistory": {
+          "type": "array",
+          "default": [],
+          "description": "History of WebSocket URLs"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}
