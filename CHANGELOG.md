@@ -22,3 +22,7 @@ All notable changes to the "WebSocket Client" extension will be documented in th
 ### Added
 - Add logo
 
+## [1.0.2] - 2026-02-21
+
+### Added
+- Fix names

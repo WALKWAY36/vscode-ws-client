@@ -1,8 +1,8 @@
 # WebSocket Client for VSCode
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/walkway36.vscode-ws-client)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.vscode-ws-client)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/walkway36.vscode-ws-client)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.vscode-ws-client)
-[![Rating](https://img.shields.io/visual-studio-marketplace/r/walkway36.vscode-ws-client)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.vscode-ws-client)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/walkway36.vscode-ws-client)](https://marketplace.visualstudio.com/items?itemName=walkway36.vscode-ws-client)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/walkway36.vscode-ws-client)](https://marketplace.visualstudio.com/items?itemName=walkway36.vscode-ws-client)
+[![Rating](https://img.shields.io/visual-studio-marketplace/r/walkway36.vscode-ws-client)](https://marketplace.visualstudio.com/items?itemName=walkway36.vscode-ws-client)
 
 A professional WebSocket client for testing and debugging WebSocket connections directly in VSCode.
 
@@ -28,7 +28,7 @@ Install through VSCode extensions marketplace:
 Or install from command line:
 
 ```bash
-code --install-extension your-publisher-name.vscode-ws-client
+code --install-extension walkway36.vscode-ws-client
 ```
 
 ## Usage

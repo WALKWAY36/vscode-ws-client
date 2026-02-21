@@ -2,7 +2,7 @@
   "name": "vscode-ws-client",
   "displayName": "WebSocket Test Client",
   "description": "WebSocket client for testing connections",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "publisher": "walkway36",
   "engines": {
     "vscode": "^1.85.0"
@@ -30,10 +30,10 @@
   "homepage": "https://github.com/WALKWAY36/vscode-ws-client",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/vscode-ws-client.git"
+    "url": "https://github.com/WALKWAY36/vscode-ws-client.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/vscode-ws-client/issues"
+    "url": "https://github.com/WALKWAY36/vscode-ws-client/issues"
   },
   "activationEvents": [
     "onCommand:ws-client.open"
@@ -76,5 +76,10 @@
   },
   "dependencies": {
     "ws": "^8.16.0"
-  }
+  },
+  "files": [
+    "out/**/*",
+    "src/media/**/*", 
+    "!**/.DS_Store"
+  ]
 }
