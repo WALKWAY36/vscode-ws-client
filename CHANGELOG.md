@@ -3,6 +3,10 @@
 
 All notable changes to the "WebSocket Client" extension will be documented in this file.
 
+## [1.1.1] - 2026-03-31
+### Fixed
+- Preview gif
+
 ## [1.1.0] - 2026-03-31
 
 ### Added
