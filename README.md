@@ -9,7 +9,7 @@ A professional WebSocket client for testing and debugging WebSocket connections 
 
 # Preview
 
-<video controls src="https://github.com/WALKWAY36/vscode-ws-client/blob/main/src/media/preview_video.mp4" title="Title"></video>
+![Preview Gif](/src/media/preview.gif)
 
 ## Features
 
