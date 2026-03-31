@@ -6,6 +6,11 @@
 
 A professional WebSocket client for testing and debugging WebSocket connections directly in VSCode.
 
+
+# Preview
+
+<video controls src="./src/media/preview_video.mp4" title="Title"></video>
+
 ## Features
 
 - 🔌 Connect to any WebSocket server (ws:// or wss://)
@@ -16,6 +21,10 @@ A professional WebSocket client for testing and debugging WebSocket connections 
 - 🎨 Clean and intuitive interface
 - 🌓 Supports VSCode light/dark themes
 - ⌨️ Keyboard shortcuts for quick access
+
+🔥 NEW 🔥
+- 👈 Icon in Activity Bar
+- 📚 Collections of requests (CRUD operations)
 
 ## Installation
 
@@ -37,6 +46,7 @@ code --install-extension walkway36.vscode-ws-client
 2. Enter a WebSocket URL (e.g., ws://echo.websocket.org or wss://echo.websocket.org)
 3. Click "Connect" or press Enter
 4. Send messages and view responses in real-time
+
 
 ## Keyboard Shortcuts
 
@@ -63,16 +73,6 @@ This extension contributes the following settings:
 
 See GitHub Issues
 
-## Release Notes
-
-### 1.0.0
-
-Initial release:
-- Basic WebSocket connection functionality
-- Message sending/receiving
-- URL history
-- Keyboard shortcuts
-- Theme support
 
 ## Contributing
 

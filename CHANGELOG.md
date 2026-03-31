@@ -3,6 +3,12 @@
 
 All notable changes to the "WebSocket Client" extension will be documented in this file.
 
+## [1.1.0] - 2026-03-31
+
+### Added
+- Icon in Activity Bar
+- Collection of requests (CRUD operations)
+
 ## [1.0.2] - 2026-02-21
 
 ### Added
