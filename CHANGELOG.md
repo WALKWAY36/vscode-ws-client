@@ -3,6 +3,17 @@
 
 All notable changes to the "WebSocket Client" extension will be documented in this file.
 
+## [1.0.2] - 2026-02-21
+
+### Added
+- Fix names
+
+## [1.0.1] - 2026-02-21
+
+### Added
+- Add logo
+
+
 ## [1.0.0] - 2026-02-21
 
 ### Added
@@ -17,12 +28,3 @@ All notable changes to the "WebSocket Client" extension will be documented in th
 - Auto-reconnect capability
 - Message clearing functionality
 
-## [1.0.1] - 2026-02-21
-
-### Added
-- Add logo
-
-## [1.0.2] - 2026-02-21
-
-### Added
-- Fix names
