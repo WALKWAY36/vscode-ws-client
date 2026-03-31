@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { WebSocketManager, MessageData } from '../webSocketManager';
+import { RequestHeader } from '../types';
 
 export class WebviewPanel implements vscode.WebviewViewProvider {
     public static readonly viewType = 'ws-client.webview';
@@ -45,11 +46,29 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                 case 'getStatus':
                     this.sendStatus();
                     break;
+                case 'saveRequest':
+                    // Delegate to the command which handles the QuickPick UI
+                    await vscode.commands.executeCommand(
+                        'ws-client.collections.saveRequest',
+                        {
+                            url: data.url,
+                            message: data.message,
+                            headers: data.headers as RequestHeader[],
+                        }
+                    );
+                    break;
             }
         });
 
-        // Send initial status
         this.sendStatus();
+    }
+
+    /**
+     * Load a saved request from the collections tree into the panel.
+     * Called by the collectionsCommands loadRequest handler.
+     */
+    public loadRequest(url: string, message: string, headers: RequestHeader[]): void {
+        this.postMessage({ type: 'loadRequest', url, message, headers });
     }
 
     private async handleConnect(url: string) {
@@ -69,20 +88,12 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
 
     private handleSendMessage(message: string) {
         if (!message.trim()) {
-            this.postMessage({
-                type: 'error',
-                data: 'Message cannot be empty'
-            });
+            this.postMessage({ type: 'error', data: 'Message cannot be empty' });
             return;
         }
-
         const success = this.webSocketManager.sendMessage(message);
         if (success) {
-            this.postMessage({
-                type: 'messageSent',
-                data: message,
-                timestamp: Date.now()
-            });
+            this.postMessage({ type: 'messageSent', data: message, timestamp: Date.now() });
         }
     }
 
@@ -97,10 +108,7 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
 
     private sendHistory() {
         const history = this.webSocketManager.getUrlHistory();
-        this.postMessage({
-            type: 'history',
-            data: history
-        });
+        this.postMessage({ type: 'history', data: history });
     }
 
     private sendStatus() {
@@ -148,11 +156,7 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>WebSocket Client</title>
             <style>
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
 
                 body {
                     font-family: var(--vscode-font-family);
@@ -182,10 +186,7 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     opacity: 0.9;
                 }
 
-                .url-input-group {
-                    display: flex;
-                    gap: 8px;
-                }
+                .url-input-group { display: flex; gap: 8px; }
 
                 input, textarea, select {
                     background-color: var(--vscode-input-background);
@@ -215,9 +216,7 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     white-space: nowrap;
                 }
 
-                button:hover {
-                    background-color: var(--vscode-button-hoverBackground);
-                }
+                button:hover { background-color: var(--vscode-button-hoverBackground); }
 
                 button.secondary {
                     background-color: var(--vscode-button-secondaryBackground);
@@ -228,19 +227,20 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     background-color: var(--vscode-button-secondaryHoverBackground);
                 }
 
-                button.danger {
-                    background-color: var(--vscode-errorForeground);
-                    opacity: 0.8;
+                button.save-btn {
+                    background-color: transparent;
+                    border: 1px solid var(--vscode-button-background);
+                    color: var(--vscode-button-background);
+                    padding: 8px 12px;
+                    font-size: 12px;
                 }
 
-                button.danger:hover {
-                    opacity: 1;
+                button.save-btn:hover {
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
                 }
 
-                button:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                }
+                button:disabled { opacity: 0.5; cursor: not-allowed; }
 
                 .status-bar {
                     display: flex;
@@ -256,24 +256,14 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     width: 10px;
                     height: 10px;
                     border-radius: 50%;
+                    flex-shrink: 0;
                 }
 
-                .status-connected {
-                    background-color: #4caf50;
-                }
+                .status-connected    { background-color: #4caf50; }
+                .status-disconnected { background-color: #f44336; }
+                .status-connecting   { background-color: #ff9800; }
 
-                .status-disconnected {
-                    background-color: #f44336;
-                }
-
-                .status-connecting {
-                    background-color: #ff9800;
-                }
-
-                .history-dropdown {
-                    margin-top: 8px;
-                    width: 100%;
-                }
+                .history-dropdown { margin-top: 8px; width: 100%; }
 
                 .messages-area {
                     background-color: var(--vscode-editor-background);
@@ -318,46 +308,75 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     opacity: 0.7;
                 }
 
-                .message-content {
-                    font-family: monospace;
-                    white-space: pre-wrap;
-                }
+                .message-content { font-family: monospace; white-space: pre-wrap; }
 
-                .input-group {
+                .input-group { display: flex; gap: 8px; align-items: flex-start; }
+                .input-group textarea { flex: 1; resize: vertical; min-height: 60px; }
+
+                .send-actions { display: flex; gap: 8px; flex-direction: column; }
+
+                .url-history-container { display: flex; flex-direction: column; gap: 8px; }
+                .button-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+                /* Headers table */
+                .headers-section { margin-top: 10px; }
+                .headers-label {
+                    font-size: 12px;
+                    opacity: 0.7;
+                    margin-bottom: 6px;
+                    cursor: pointer;
+                    user-select: none;
                     display: flex;
-                    gap: 8px;
-                    align-items: flex-start;
+                    align-items: center;
+                    gap: 4px;
                 }
 
-                .input-group textarea {
-                    flex: 1;
-                    resize: vertical;
-                    min-height: 60px;
+                .headers-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                .headers-table th {
+                    text-align: left;
+                    padding: 4px 6px;
+                    opacity: 0.6;
+                    font-weight: normal;
+                }
+                .headers-table td { padding: 3px 2px; }
+                .headers-table input {
+                    padding: 4px 6px;
+                    font-size: 12px;
                 }
 
-                .url-history-container {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
+                .header-row-enabled { opacity: 1; }
+                .header-row-disabled { opacity: 0.4; }
 
-                .button-group {
-                    display: flex;
-                    gap: 8px;
-                    flex-wrap: wrap;
+                .btn-icon {
+                    background: transparent;
+                    border: none;
+                    padding: 2px 6px;
+                    cursor: pointer;
+                    color: var(--vscode-editor-foreground);
+                    opacity: 0.5;
+                    font-size: 14px;
+                }
+                .btn-icon:hover { opacity: 1; background: transparent; }
+
+                .add-header-btn {
+                    margin-top: 6px;
+                    font-size: 11px;
+                    padding: 4px 8px;
                 }
             </style>
         </head>
         <body>
             <div class="container">
+                <!-- Status bar -->
                 <div class="status-bar">
                     <span id="statusIndicator" class="status-indicator status-disconnected"></span>
                     <span id="statusText">Disconnected</span>
-                    <span id="urlText" style="opacity: 0.7;"></span>
+                    <span id="urlText" style="opacity: 0.7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
                 </div>
 
+                <!-- Connection -->
                 <div class="section">
-                    <div class="section-title">Connection Settings</div>
+                    <div class="section-title">Connection</div>
                     <div class="url-history-container">
                         <select id="historySelect" class="history-dropdown" style="display: none;" onchange="useHistoryUrl()">
                             <option value="">Recent URLs</option>
@@ -373,19 +392,48 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     </div>
                 </div>
 
+                <!-- Send Message -->
                 <div class="section">
                     <div class="section-title">Send Message</div>
-                    <div class="input-group">
-                        <textarea id="messageInput" placeholder="Type your message here..."></textarea>
-                        <button id="sendBtn" onclick="sendMessage()">Send</button>
+
+                    <!-- Headers (collapsible) -->
+                    <div class="headers-section">
+                        <div class="headers-label" onclick="toggleHeaders()">
+                            <span id="headersArrow">▶</span>
+                            <span>Headers</span>
+                            <span id="headersCount" style="opacity:0.5;"></span>
+                        </div>
+                        <div id="headersBody" style="display:none;">
+                            <table class="headers-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:24px;"></th>
+                                        <th>Key</th>
+                                        <th>Value</th>
+                                        <th style="width:28px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="headersTableBody"></tbody>
+                            </table>
+                            <button class="secondary add-header-btn" onclick="addHeaderRow()">+ Add header</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 10px;">
+                        <textarea id="messageInput" placeholder="Type your message here… (Ctrl+Enter to send)"></textarea>
+                        <div class="send-actions">
+                            <button id="sendBtn" onclick="sendMessage()">Send</button>
+                            <button class="save-btn" onclick="saveRequest()" title="Save to collections">💾 Save</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Messages -->
                 <div class="section">
                     <div class="section-title">Messages</div>
                     <div id="messagesArea" class="messages-area"></div>
                     <div style="margin-top: 8px;">
-                        <button class="secondary" onclick="clearMessages()">Clear Messages</button>
+                        <button class="secondary" onclick="clearMessages()">Clear</button>
                     </div>
                 </div>
             </div>
@@ -393,6 +441,9 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
             <script>
                 const vscode = acquireVsCodeApi();
                 let showHistory = false;
+                let showHeaders = false;
+
+                // ─── Message handler from extension ──────────────────────
 
                 window.addEventListener('message', event => {
                     const message = event.data;
@@ -412,32 +463,119 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                         case 'status':
                             updateStatus(message.data);
                             break;
+                        case 'loadRequest':
+                            loadRequest(message.url, message.message, message.headers);
+                            break;
                     }
                 });
 
+                // ─── Load saved request from Collections tree ─────────────
+
+                function loadRequest(url, message, headers) {
+                    document.getElementById('urlInput').value = url || '';
+                    document.getElementById('messageInput').value = message || '';
+
+                    // Rebuild headers table
+                    const tbody = document.getElementById('headersTableBody');
+                    tbody.innerHTML = '';
+                    (headers || []).forEach(h => addHeaderRow(h.key, h.value, h.enabled));
+                    updateHeadersCount();
+
+                    addMessage('system', '📂 Loaded: ' + url);
+                }
+
+                // ─── Connection ───────────────────────────────────────────
+
                 function connect() {
                     const url = document.getElementById('urlInput').value.trim();
-                    if (!url) {
-                        vscode.postMessage({ type: 'connect', url: '' });
-                        return;
-                    }
-                    vscode.postMessage({ type: 'connect', url: url });
-                    addMessage('system', 'Connecting to ' + url + '...');
+                    vscode.postMessage({ type: 'connect', url });
+                    addMessage('system', 'Connecting to ' + url + '…');
                 }
 
                 function disconnect() {
                     vscode.postMessage({ type: 'disconnect' });
-                    addMessage('system', 'Disconnecting...');
+                    addMessage('system', 'Disconnecting…');
                 }
+
+                // ─── Send ─────────────────────────────────────────────────
 
                 function sendMessage() {
                     const input = document.getElementById('messageInput');
                     const message = input.value.trim();
                     if (message) {
-                        vscode.postMessage({ type: 'send', message: message });
+                        vscode.postMessage({ type: 'send', message });
                         input.value = '';
                     }
                 }
+
+                // ─── Save to collections ──────────────────────────────────
+
+                function saveRequest() {
+                    const url = document.getElementById('urlInput').value.trim();
+                    const message = document.getElementById('messageInput').value.trim();
+                    const headers = getHeaders();
+
+                    if (!url) {
+                        addMessage('error', 'Enter a WebSocket URL before saving.');
+                        return;
+                    }
+
+                    vscode.postMessage({ type: 'saveRequest', url, message, headers });
+                }
+
+                // ─── Headers ─────────────────────────────────────────────
+
+                function toggleHeaders() {
+                    showHeaders = !showHeaders;
+                    document.getElementById('headersBody').style.display = showHeaders ? 'block' : 'none';
+                    document.getElementById('headersArrow').textContent = showHeaders ? '▼' : '▶';
+                }
+
+                function addHeaderRow(key = '', value = '', enabled = true) {
+                    const tbody = document.getElementById('headersTableBody');
+                    const tr = document.createElement('tr');
+                    tr.className = enabled ? 'header-row-enabled' : 'header-row-disabled';
+                    tr.innerHTML = \`
+                        <td>
+                            <input type="checkbox" \${enabled ? 'checked' : ''} onchange="toggleHeaderRow(this)" title="Enable/disable header">
+                        </td>
+                        <td><input type="text" placeholder="Key" value="\${escHtml(key)}" oninput="updateHeadersCount()"></td>
+                        <td><input type="text" placeholder="Value" value="\${escHtml(value)}"></td>
+                        <td><button class="btn-icon" onclick="removeHeaderRow(this)" title="Remove">✕</button></td>
+                    \`;
+                    tbody.appendChild(tr);
+                    updateHeadersCount();
+                }
+
+                function toggleHeaderRow(checkbox) {
+                    const tr = checkbox.closest('tr');
+                    tr.className = checkbox.checked ? 'header-row-enabled' : 'header-row-disabled';
+                }
+
+                function removeHeaderRow(btn) {
+                    btn.closest('tr').remove();
+                    updateHeadersCount();
+                }
+
+                function getHeaders() {
+                    const rows = document.querySelectorAll('#headersTableBody tr');
+                    return Array.from(rows).map(tr => {
+                        const inputs = tr.querySelectorAll('input[type=text]');
+                        const checkbox = tr.querySelector('input[type=checkbox]');
+                        return {
+                            key: inputs[0].value.trim(),
+                            value: inputs[1].value.trim(),
+                            enabled: checkbox.checked,
+                        };
+                    }).filter(h => h.key);
+                }
+
+                function updateHeadersCount() {
+                    const count = document.querySelectorAll('#headersTableBody tr').length;
+                    document.getElementById('headersCount').textContent = count > 0 ? \`(\${count})\` : '';
+                }
+
+                // ─── WebSocket events ─────────────────────────────────────
 
                 function handleWebSocketEvent(eventType, data, timestamp) {
                     switch (eventType) {
@@ -450,7 +588,6 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                             break;
                         case 'message':
                             try {
-                                // Try to parse as JSON for better display
                                 const parsed = JSON.parse(data);
                                 addMessage('incoming', JSON.stringify(parsed, null, 2), timestamp);
                             } catch {
@@ -464,29 +601,36 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     requestStatus();
                 }
 
+                // ─── Messages area ────────────────────────────────────────
+
                 function addMessage(type, content, timestamp) {
                     const messagesArea = document.getElementById('messagesArea');
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message-item message-' + (type === 'error' ? 'error' : 
-                                                                    type === 'incoming' ? 'incoming' : 
-                                                                    type === 'outgoing' ? 'outgoing' : 
-                                                                    'system');
-                    
-                    const time = timestamp ? new Date(timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
-                    const header = document.createElement('div');
-                    header.className = 'message-header';
-                    header.innerHTML = '<span>' + (type === 'incoming' ? '📩 Received' : 
-                                                  type === 'outgoing' ? '📤 Sent' : 
-                                                  type === 'error' ? '❌ Error' : 'ℹ️ System') + '</span>' +
-                                      '<span>' + time + '</span>';
-                    
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'message-content';
-                    contentDiv.textContent = content;
-                    
-                    messageDiv.appendChild(header);
-                    messageDiv.appendChild(contentDiv);
-                    messagesArea.appendChild(messageDiv);
+                    const div = document.createElement('div');
+                    div.className = 'message-item message-' +
+                        (type === 'error' ? 'error' :
+                         type === 'incoming' ? 'incoming' :
+                         type === 'outgoing' ? 'outgoing' : 'system');
+
+                    const time = timestamp
+                        ? new Date(timestamp).toLocaleTimeString()
+                        : new Date().toLocaleTimeString();
+
+                    const labels = {
+                        incoming: '📩 Received',
+                        outgoing: '📤 Sent',
+                        error: '❌ Error',
+                        system: 'ℹ️ System',
+                    };
+
+                    div.innerHTML =
+                        '<div class="message-header">' +
+                            '<span>' + (labels[type] || 'ℹ️ System') + '</span>' +
+                            '<span>' + time + '</span>' +
+                        '</div>' +
+                        '<div class="message-content"></div>';
+
+                    div.querySelector('.message-content').textContent = content;
+                    messagesArea.appendChild(div);
                     messagesArea.scrollTop = messagesArea.scrollHeight;
                 }
 
@@ -494,83 +638,70 @@ export class WebviewPanel implements vscode.WebviewViewProvider {
                     document.getElementById('messagesArea').innerHTML = '';
                 }
 
+                // ─── Status ───────────────────────────────────────────────
+
                 function updateStatus(status) {
-                    const statusText = document.getElementById('statusText');
-                    const urlText = document.getElementById('urlText');
-                    const indicator = document.getElementById('statusIndicator');
-                    
-                    statusText.textContent = status.status;
-                    urlText.textContent = status.url ? ' - ' + status.url : '';
-                    
-                    indicator.className = 'status-indicator';
-                    if (status.status === 'Connected') {
-                        indicator.classList.add('status-connected');
-                    } else if (status.status === 'Connecting...') {
-                        indicator.classList.add('status-connecting');
-                    } else {
-                        indicator.classList.add('status-disconnected');
-                    }
+                    document.getElementById('statusText').textContent = status.status;
+                    document.getElementById('urlText').textContent = status.url ? ' — ' + status.url : '';
+                    const ind = document.getElementById('statusIndicator');
+                    ind.className = 'status-indicator ' + (
+                        status.status === 'Connected'    ? 'status-connected'    :
+                        status.status === 'Connecting…'  ? 'status-connecting'   :
+                                                           'status-disconnected'
+                    );
                 }
 
-                function requestHistory() {
-                    vscode.postMessage({ type: 'getHistory' });
-                }
+                // ─── URL history ──────────────────────────────────────────
 
-                function requestStatus() {
-                    vscode.postMessage({ type: 'getStatus' });
-                }
+                function requestHistory() { vscode.postMessage({ type: 'getHistory' }); }
+                function requestStatus()  { vscode.postMessage({ type: 'getStatus' }); }
 
                 function updateHistoryDropdown(history) {
                     const select = document.getElementById('historySelect');
                     select.innerHTML = '<option value="">Recent URLs</option>';
                     history.forEach(url => {
-                        const option = document.createElement('option');
-                        option.value = url;
-                        option.textContent = url;
-                        select.appendChild(option);
+                        const opt = document.createElement('option');
+                        opt.value = url;
+                        opt.textContent = url;
+                        select.appendChild(opt);
                     });
                 }
 
                 function toggleHistory() {
                     const select = document.getElementById('historySelect');
                     const btn = document.getElementById('toggleHistoryBtn');
-                    if (showHistory) {
-                        select.style.display = 'none';
-                        btn.textContent = '▼';
-                    } else {
-                        select.style.display = 'block';
-                        btn.textContent = '▲';
-                        requestHistory();
-                    }
                     showHistory = !showHistory;
+                    select.style.display = showHistory ? 'block' : 'none';
+                    btn.textContent = showHistory ? '▲' : '▼';
+                    if (showHistory) { requestHistory(); }
                 }
 
                 function useHistoryUrl() {
                     const select = document.getElementById('historySelect');
-                    const urlInput = document.getElementById('urlInput');
                     if (select.value) {
-                        urlInput.value = select.value;
+                        document.getElementById('urlInput').value = select.value;
                         select.style.display = 'none';
                         showHistory = false;
                         document.getElementById('toggleHistoryBtn').textContent = '▼';
                     }
                 }
 
-                // Load initial status and history
+                // ─── Utils ────────────────────────────────────────────────
+
+                function escHtml(str) {
+                    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                }
+
+                // ─── Init ─────────────────────────────────────────────────
+
                 requestStatus();
                 requestHistory();
 
-                // Keyboard shortcuts
-                document.getElementById('urlInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        connect();
-                    }
+                document.getElementById('urlInput').addEventListener('keypress', e => {
+                    if (e.key === 'Enter') { connect(); }
                 });
-
-                document.getElementById('messageInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter' && e.ctrlKey) {
-                        sendMessage();
-                    }
+                document.getElementById('messageInput').addEventListener('keypress', e => {
+                    if (e.key === 'Enter' && e.ctrlKey) { sendMessage(); }
                 });
             </script>
         </body>
