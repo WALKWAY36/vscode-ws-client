@@ -40,10 +40,85 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ws-client-sidebar",
+          "title": "WS Client",
+          "icon": "$(radio-tower)"
+        }
+      ]
+    },
+    "views": {
+      "ws-client-sidebar": [
+        {
+          "type": "webview",
+          "id": "ws-client.webview",
+          "name": "Client",
+          "icon": "$(radio-tower)",
+          "contextualTitle": "WebSocket Client"
+        },
+        {
+          "id": "ws-client.collections",
+          "name": "Collections",
+          "icon": "$(folder-library)",
+          "contextualTitle": "WS Collections"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "ws-client.open",
         "title": "WebSocket Client: Open Connection Panel"
+      },
+      {
+        "command": "ws-client.collections.new",
+        "title": "New Collection",
+        "category": "WS Client",
+        "icon": "$(add)"
+      },
+      {
+        "command": "ws-client.collections.refresh",
+        "title": "Refresh Collections",
+        "category": "WS Client",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ws-client.collections.rename",
+        "title": "Rename Collection",
+        "category": "WS Client"
+      },
+      {
+        "command": "ws-client.collections.delete",
+        "title": "Delete Collection",
+        "category": "WS Client"
+      },
+      {
+        "command": "ws-client.collections.saveRequest",
+        "title": "Save Current Request",
+        "category": "WS Client",
+        "icon": "$(save)"
+      },
+      {
+        "command": "ws-client.collections.loadRequest",
+        "title": "Load Request",
+        "category": "WS Client",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "ws-client.collections.editRequest",
+        "title": "Edit Request",
+        "category": "WS Client"
+      },
+      {
+        "command": "ws-client.collections.duplicateRequest",
+        "title": "Duplicate Request",
+        "category": "WS Client"
+      },
+      {
+        "command": "ws-client.collections.deleteRequest",
+        "title": "Delete Request",
+        "category": "WS Client"
       }
     ],
     "keybindings": [
@@ -54,7 +129,7 @@
       }
     ],
     "configuration": {
-      "title": "WebSocket Client",
+      "title": "WebSocket Test   Client",
       "properties": {
         "wsClient.urlHistory": {
           "type": "array",
@@ -62,6 +137,52 @@
           "description": "History of WebSocket URLs"
         }
       }
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "ws-client.collections.new",
+          "when": "view == ws-client.collections",
+          "group": "navigation"
+        },
+        {
+          "command": "ws-client.collections.refresh",
+          "when": "view == ws-client.collections",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "ws-client.collections.rename",
+          "when": "view == ws-client.collections && viewItem == collection",
+          "group": "1_modify@1"
+        },
+        {
+          "command": "ws-client.collections.delete",
+          "when": "view == ws-client.collections && viewItem == collection",
+          "group": "2_delete@1"
+        },
+        {
+          "command": "ws-client.collections.loadRequest",
+          "when": "view == ws-client.collections && viewItem == savedRequest",
+          "group": "1_run@1"
+        },
+        {
+          "command": "ws-client.collections.editRequest",
+          "when": "view == ws-client.collections && viewItem == savedRequest",
+          "group": "2_modify@1"
+        },
+        {
+          "command": "ws-client.collections.duplicateRequest",
+          "when": "view == ws-client.collections && viewItem == savedRequest",
+          "group": "2_modify@2"
+        },
+        {
+          "command": "ws-client.collections.deleteRequest",
+          "when": "view == ws-client.collections && viewItem == savedRequest",
+          "group": "3_delete@1"
+        }
+      ]
     }
   },
   "scripts": {
@@ -79,7 +200,7 @@
   },
   "files": [
     "out/**/*",
-    "src/media/**/*", 
+    "src/media/**/*",
     "!**/.DS_Store"
   ]
 }
