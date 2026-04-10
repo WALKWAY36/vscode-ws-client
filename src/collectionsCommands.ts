@@ -3,10 +3,7 @@ import { CollectionsManager } from './collectionsManager';
 import { CollectionsProvider, CollectionItem, RequestItem } from './collectionsProvider';
 import { RequestHeader } from './types';
 
-/**
- * Central place for all collection-related commands.
- * Each function returns a Disposable to push into context.subscriptions.
- */
+const VALIDATE_NAME = (v: string) => (v.trim() ? undefined : 'Name cannot be empty');
 export function registerCollectionCommands(
   context: vscode.ExtensionContext,
   manager: CollectionsManager,
@@ -19,13 +16,14 @@ export function registerCollectionCommands(
       const name = await vscode.window.showInputBox({
         prompt: 'Collection name',
         placeHolder: 'e.g. Project Alpha',
-        validateInput: (v) => (v.trim() ? undefined : 'Name cannot be empty'),
+        validateInput: VALIDATE_NAME,
       });
       if (!name) { return; }
 
       const description = await vscode.window.showInputBox({
         prompt: 'Description (optional)',
         placeHolder: 'Short description',
+        validateInput: VALIDATE_NAME,
       });
 
       await manager.createCollection(name.trim(), description?.trim() || undefined);
@@ -39,7 +37,7 @@ export function registerCollectionCommands(
         const newName = await vscode.window.showInputBox({
           prompt: 'New collection name',
           value: item.collection.name,
-          validateInput: (v) => (v.trim() ? undefined : 'Name cannot be empty'),
+          validateInput: VALIDATE_NAME,
         });
         if (!newName) { return; }
         await manager.renameCollection(item.collection.id, newName.trim());
@@ -88,7 +86,7 @@ export function registerCollectionCommands(
         if (collectionId === '__new__') {
           const name = await vscode.window.showInputBox({
             prompt: 'New collection name',
-            validateInput: (v) => (v.trim() ? undefined : 'Name cannot be empty'),
+            validateInput: VALIDATE_NAME,
           });
           if (!name) { return; }
           const col = await manager.createCollection(name.trim());
@@ -99,11 +97,10 @@ export function registerCollectionCommands(
         const name = await vscode.window.showInputBox({
           prompt: 'Request name',
           placeHolder: 'e.g. Subscribe to channel',
-          validateInput: (v) => (v.trim() ? undefined : 'Name cannot be empty'),
+          validateInput: VALIDATE_NAME,
         });
         if (!name) { return; }
 
-        // Step 3: optional description
         const description = await vscode.window.showInputBox({
           prompt: 'Description (optional)',
           placeHolder: 'What does this request do?',
@@ -118,7 +115,7 @@ export function registerCollectionCommands(
           description?.trim() || undefined
         );
         provider.refresh();
-        vscode.window.showInformationMessage(`✅ Request "${name}" saved.`);
+        vscode.window.showInformationMessage(`${EMODJI.SUCCESS} Request "${name}" saved.`);
       }
     ),
 

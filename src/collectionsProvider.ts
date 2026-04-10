@@ -28,8 +28,8 @@ export class RequestItem extends vscode.TreeItem {
     this.tooltip = [
       request.name,
       request.description ? `📝 ${request.description}` : '',
-      `🔗 ${request.url}`,
-      request.message ? `📨 ${request.message.slice(0, 60)}${request.message.length > 60 ? '…' : ''}` : '',
+      `${EMODJI.URL} ${request.url}`,
+      request.message ? `${EMODJI.REQUEST} ${request.message.slice(0, 60)}${request.message.length > 60 ? '…' : ''}` : '',
     ]
       .filter(Boolean)
       .join('\n');
