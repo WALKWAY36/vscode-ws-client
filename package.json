@@ -56,7 +56,7 @@
           "id": "ws-client.webview",
           "name": "Client",
           "icon": "$(radio-tower)",
-          "contextualTitle": "WebSocket Client"
+          "contextualTitle": "WebSocket Test Client"
         },
         {
           "id": "ws-client.collections",
@@ -69,7 +69,8 @@
     "commands": [
       {
         "command": "ws-client.open",
-        "title": "WebSocket Client: Open Connection Panel"
+        "title": "Open WebSocket Test Client",
+        "category": "WS Client"
       },
       {
         "command": "ws-client.collections.new",
@@ -79,7 +80,7 @@
       },
       {
         "command": "ws-client.collections.refresh",
-        "title": "Refresh Collections",
+        "title": "Refresh  Collections",
         "category": "WS Client",
         "icon": "$(refresh)"
       },
@@ -96,8 +97,7 @@
       {
         "command": "ws-client.collections.saveRequest",
         "title": "Save Current Request",
-        "category": "WS Client",
-        "icon": "$(save)"
+        "category": "WS Client"
       },
       {
         "command": "ws-client.collections.loadRequest",
@@ -119,6 +119,29 @@
         "command": "ws-client.collections.deleteRequest",
         "title": "Delete Request",
         "category": "WS Client"
+      },
+
+      {
+        "command": "ws-client.collections.openTests",
+        "title": "Edit Test Cases",
+        "category": "WS Client",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "ws-client.collections.runTests",
+        "title": "Run Tests",
+        "category": "WS Client",
+        "icon": "$(play)"
+      },
+      {
+        "command": "ws-client.collections.toggleTestCase",
+        "title": "Enable / Disable",
+        "category": "WS Client"
+      },
+      {
+        "command": "ws-client.collections.deleteTestCase",
+        "title": "Delete Test Case",
+        "category": "WS Client"
       }
     ],
     "keybindings": [
@@ -129,7 +152,7 @@
       }
     ],
     "configuration": {
-      "title": "WebSocket Test  Client",
+      "title": "WebSocket Test Client",
       "properties": {
         "wsClient.urlHistory": {
           "type": "array",
@@ -143,25 +166,36 @@
         {
           "command": "ws-client.collections.new",
           "when": "view == ws-client.collections",
-          "group": "navigation"
+          "group": "navigation@1"
         },
         {
           "command": "ws-client.collections.refresh",
           "when": "view == ws-client.collections",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
         {
+          "command": "ws-client.collections.openTests",
+          "when": "view == ws-client.collections && viewItem == collection",
+          "group": "1_tests@1"
+        },
+        {
+          "command": "ws-client.collections.runTests",
+          "when": "view == ws-client.collections && viewItem == collection",
+          "group": "1_tests@2"
+        },
+        {
           "command": "ws-client.collections.rename",
           "when": "view == ws-client.collections && viewItem == collection",
-          "group": "1_modify@1"
+          "group": "2_modify@1"
         },
         {
           "command": "ws-client.collections.delete",
           "when": "view == ws-client.collections && viewItem == collection",
-          "group": "2_delete@1"
+          "group": "3_delete@1"
         },
+
         {
           "command": "ws-client.collections.loadRequest",
           "when": "view == ws-client.collections && viewItem == savedRequest",
@@ -181,6 +215,27 @@
           "command": "ws-client.collections.deleteRequest",
           "when": "view == ws-client.collections && viewItem == savedRequest",
           "group": "3_delete@1"
+        },
+
+        {
+          "command": "ws-client.collections.openTests",
+          "when": "view == ws-client.collections && viewItem == testSuite",
+          "group": "1_run@1"
+        },
+        {
+          "command": "ws-client.collections.runTests",
+          "when": "view == ws-client.collections && viewItem == testSuite",
+          "group": "1_run@2"
+        },
+        {
+          "command": "ws-client.collections.toggleTestCase",
+          "when": "view == ws-client.collections && viewItem == testCase",
+          "group": "1_modify@1"
+        },
+        {
+          "command": "ws-client.collections.deleteTestCase",
+          "when": "view == ws-client.collections && viewItem == testCase",
+          "group": "2_delete@1"
         }
       ]
     }

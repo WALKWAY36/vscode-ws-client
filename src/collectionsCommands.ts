@@ -1,14 +1,22 @@
 import * as vscode from 'vscode';
-import { CollectionsManager } from './collectionsManager';
-import { CollectionsProvider, CollectionItem, RequestItem } from './collectionsProvider';
+import { CollectionsManager } from './manage/collectionsManager';
+import {
+  CollectionsProvider, CollectionItem, RequestItem,
+  TestSuiteItem, TestCaseItem,
+} from './collectionsProvider';
+import { TestEditorPanel } from './webview/testEditorPanel';
+import { TestResultsPanel } from './webview/testResultsPanel';
+import { runTestSuite } from './/testRunner';
 import { RequestHeader } from './types';
+import { EMODJI } from './config';
 
 const VALIDATE_NAME = (v: string) => (v.trim() ? undefined : 'Name cannot be empty');
 export function registerCollectionCommands(
   context: vscode.ExtensionContext,
   manager: CollectionsManager,
   provider: CollectionsProvider,
-  loadRequestInPanel: (url: string, message: string, headers: RequestHeader[]) => void
+  loadRequestInPanel: (url: string, message: string, headers: RequestHeader[]) => void,
+  extensionUri: vscode.Uri,
 ): vscode.Disposable[] {
   return [
     // ── New collection ───────────────────────────────────────────────────
@@ -168,6 +176,74 @@ export function registerCollectionCommands(
         );
         if (answer !== 'Delete') { return; }
         await manager.deleteRequest(item.collectionId, item.request.id);
+        provider.refresh();
+      }
+    ),
+
+    // ── Open WS test editor ────────────────────────────────────────────────
+    vscode.commands.registerCommand('ws-client.collections.openTests',
+      (item: CollectionItem | TestSuiteItem) => {
+        const colId = item.collection.id;
+        TestEditorPanel.open(colId, manager, provider, extensionUri);
+      }
+    ),
+
+    // ── Run test suite ─────────────────────────────────────────────────────
+    vscode.commands.registerCommand('ws-client.collections.runTests',
+      async (item: CollectionItem | TestSuiteItem) => {
+        const col = item.collection;
+
+        const enabled = col.testCases.filter((tc) => tc.enabled);
+        if (enabled.length === 0) {
+          vscode.window.showInformationMessage(`Collection "${col.name}" has no enabled test cases.`);
+          return;
+        }
+
+        await vscode.window.withProgress(
+          {
+            location: vscode.ProgressLocation.Notification,
+            title: `Running tests: ${col.name}`,
+            cancellable: false,
+          },
+          async (progress) => {
+            const result = await runTestSuite(col, (done: number, total: number, name: any) => {
+              progress.report({
+                message: `[${done + 1}/${total}] ${name}`,
+                increment: (1 / total) * 100,
+              });
+            });
+
+            await manager.saveTestSuiteResult(col.id, result);
+            provider.refresh();
+            TestResultsPanel.show(result, extensionUri);
+
+            const icon = result.failedCount === 0 ? EMODJI.SUCCESS : EMODJI.FAILURE;
+            vscode.window.showInformationMessage(
+              `${icon} ${col.name}: ${result.passedCount}/${result.totalCount} passed (${result.durationMs}ms)`
+            );
+          }
+        );
+      }
+    ),
+
+    // ── Toggle test case enabled ───────────────────────────────────────────
+    vscode.commands.registerCommand('ws-client.collections.toggleTestCase',
+      async (item: TestCaseItem) => {
+        await manager.updateTestCase(item.collectionId, item.testCase.id, {
+          enabled: !item.testCase.enabled,
+        });
+        provider.refresh();
+      }
+    ),
+
+    // ── Delete test case (from TreeView context menu) ──────────────────────
+    vscode.commands.registerCommand('ws-client.collections.deleteTestCase',
+      async (item: TestCaseItem) => {
+        const answer = await vscode.window.showWarningMessage(
+          `Delete test case "${item.testCase.name}"?`, { modal: true }, 'Delete'
+        );
+        if (answer !== 'Delete') { return; }
+        await manager.deleteTestCase(item.collectionId, item.testCase.id);
         provider.refresh();
       }
     ),

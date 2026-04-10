@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { WebSocketManager } from './webSocketManager';
+import { WebSocketManager } from './manage/webSocketManager';
 import { WebviewPanel } from './webview/webviewPanel';
-import { CollectionsManager } from './collectionsManager';
+import { CollectionsManager } from './manage/collectionsManager';
 import { CollectionsProvider } from './collectionsProvider';
 import { registerCollectionCommands } from './collectionsCommands';
 import { RequestHeader } from './types';
@@ -38,24 +38,21 @@ export function activate(context: vscode.ExtensionContext) {
     });
     context.subscriptions.push(treeView);
 
-    // ── Collection commands ───────────────────────────────────────────────
-    /**
-     * Called when the user clicks a saved request in the tree.
-     * Loads the request into the webview panel.
-     */
+  // ── Glue: load request from tree → panel ──────────────────────────────
     function loadRequestInPanel(url: string, message: string, headers: RequestHeader[]) {
         webviewProvider.loadRequest(url, message, headers);
-        // Reveal the webview sidebar so the user can see the loaded request
         vscode.commands.executeCommand('ws-client.webview.focus');
     }
 
-    const collectionDisposables = registerCollectionCommands(
+  // ── Register all collection + test commands ────────────────────────────
+  const disposables = registerCollectionCommands(
         context,
         collectionsManager,
         collectionsProvider,
-        loadRequestInPanel
+    loadRequestInPanel,
+    context.extensionUri,
     );
-    context.subscriptions.push(...collectionDisposables);
+  context.subscriptions.push(...disposables);
 }
 
 export function deactivate() {
