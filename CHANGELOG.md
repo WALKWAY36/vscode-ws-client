@@ -3,6 +3,14 @@
 
 All notable changes to the "WebSocket Client" extension will be documented in this file.
 
+## [1.2.0] - 2026-04-11
+### New Features - Test 
+
+### Added
+- Tree Tests collections (CRUD operations);
+- Tests suite panel;
+- Tests result panel;
+
 ## [1.1.1] - 2026-03-31
 ### Fixed
 - Preview gif

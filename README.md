@@ -9,10 +9,20 @@ A professional WebSocket client for testing and debugging WebSocket connections 
 
 # Preview
 
+## Example Test suite panel
+![Preview Test panels photo](/src/media/preview_test_panels.png)
+
+## Create collections easy!
+
 ![Preview Gif](/src/media/preview.gif)
 
 ## Features
 
+🔥 NEW 🔥
+- Test suite panel
+
+- 👈 Icon in Activity Bar
+- 📚 Collections of requests (CRUD operations)
 - 🔌 Connect to any WebSocket server (ws:// or wss://)
 - 📨 Send and receive messages in real-time
 - 📜 Message history with timestamps
@@ -22,9 +32,7 @@ A professional WebSocket client for testing and debugging WebSocket connections 
 - 🌓 Supports VSCode light/dark themes
 - ⌨️ Keyboard shortcuts for quick access
 
-🔥 NEW 🔥
-- 👈 Icon in Activity Bar
-- 📚 Collections of requests (CRUD operations)
+
 
 ## Installation
 
