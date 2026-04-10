@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-import { CollectionsManager } from './collectionsManager';
-import { Collection, SavedRequest } from './types';
+import { CollectionsManager } from './manage/collectionsManager';
+import { Collection, SavedRequest, TestCase } from './types';
+import { EMODJI } from './config';
 
 // ─── Tree item types ──────────────────────────────────────────────────────────
 
@@ -9,10 +10,21 @@ export class CollectionItem extends vscode.TreeItem {
     super(collection.name, vscode.TreeItemCollapsibleState.Expanded);
     this.contextValue = 'collection';
     this.iconPath = new vscode.ThemeIcon('folder');
-    this.tooltip = collection.description
-      ? `${collection.name}\n${collection.description}`
-      : collection.name;
-    this.description = `${collection.requests.length} request${collection.requests.length !== 1 ? 's' : ''}`;
+
+    const r = collection.lastTestResult;
+    if (r) {
+      const icon = r.failedCount === 0 ? EMODJI.SUCCESS : EMODJI.FAILURE;
+      this.description = `${icon} ${r.passedCount}/${r.totalCount}`;
+    } else {
+      this.description = `${collection.requests.length} req · ${collection.testCases.length} tests`;
+    }
+
+    this.tooltip = [
+      collection.name,
+      collection.description,
+      `Requests: ${collection.requests.length}`,
+      `Test cases: ${collection.testCases.length}`,
+    ].filter(Boolean).join('\n');
   }
 }
 
@@ -43,7 +55,56 @@ export class RequestItem extends vscode.TreeItem {
   }
 }
 
-export type CollectionTreeItem = CollectionItem | RequestItem;
+export class TestSuiteItem extends vscode.TreeItem {
+  constructor(public readonly collection: Collection) {
+    super('Tests', vscode.TreeItemCollapsibleState.Collapsed);
+    this.contextValue = 'testSuite';
+    this.iconPath = new vscode.ThemeIcon('beaker');
+
+    const r = collection.lastTestResult;
+    if (r) {
+      const icon = r.failedCount === 0 ? EMODJI.SUCCESS : EMODJI.FAILURE;
+      this.description = `${icon} ${r.passedCount}/${r.totalCount}`;
+    } else {
+      this.description = `${collection.testCases.length} case${collection.testCases.length !== 1 ? 's' : ''}`;
+    }
+    this.tooltip = 'Test cases for this collection';
+  }
+}
+
+export class TestCaseItem extends vscode.TreeItem {
+  constructor(
+    public readonly testCase: TestCase,
+    public readonly collectionId: string,
+    public readonly lastPassed?: boolean
+  ) {
+    super(testCase.name, vscode.TreeItemCollapsibleState.None);
+    this.contextValue = 'testCase';
+
+    const statusIcon =
+      !testCase.enabled       ? EMODJI.DISABLE :
+      lastPassed === true     ? EMODJI.SUCCESS :
+      lastPassed === false    ? EMODJI.FAILURE :
+                                EMODJI.DISABLE;
+
+    this.iconPath = new vscode.ThemeIcon(
+      !testCase.enabled    ? 'circle-slash' :
+      lastPassed === true  ? 'pass'         :
+      lastPassed === false ? 'error'        :
+                             'circle-outline'
+    );
+
+    this.description = testCase.enabled ? undefined : '(disabled)';
+    this.tooltip = [
+      testCase.name,
+      testCase.description,
+      `Assertion: ${testCase.assertion}`,
+      testCase.enabled ? '' : '— disabled',
+    ].filter(Boolean).join('\n');
+  }
+}
+
+export type CollectionTreeItem = CollectionItem | RequestItem | TestSuiteItem | TestCaseItem;
 
 // ─── Provider ────────────────────────────────────────────────────────────────
 
@@ -72,9 +133,29 @@ export class CollectionsProvider
     }
 
     if (element instanceof CollectionItem) {
-      return element.collection.requests.map(
-        (r) => new RequestItem(r, element.collection.id)
-      );
+      const col = element.collection;
+      const children: CollectionTreeItem[] = [];
+
+      // Requests group
+      for (const r of col.requests) {
+        children.push(new RequestItem(r, col.id));
+      }
+
+      // Test suite node
+      children.push(new TestSuiteItem(col));
+      return children;
+    }
+
+    if (element instanceof TestSuiteItem) {
+      const col = element.collection;
+      return col.testCases.map((tc) => {
+        const lastResult = col.lastTestResult?.results.find((r) => r.testCaseId === tc.id);
+        return new TestCaseItem(
+          tc,
+          col.id,
+          lastResult ? lastResult.passed : undefined
+        );
+      });
     }
 
     return [];
