@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { WebSocketManager, MessageData } from '../webSocketManager';
+import { WebSocketManager, MessageData } from '../manage/webSocketManager';
 import { RequestHeader } from '../types';
 
 export class WebviewPanel implements vscode.WebviewViewProvider {
