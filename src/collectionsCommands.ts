@@ -50,9 +50,8 @@ export function registerCollectionCommands(
       'ws-client.collections.delete',
       async (item: CollectionItem) => {
         const answer = await vscode.window.showWarningMessage(
-          `Delete collection "${item.collection.name}" and all incoming requests?`,
-          { modal: true },
-          'Delete'
+          `Delete collection "${item.collection.name}" and all its data?`,
+          { modal: true }, 'Delete'
         );
         if (answer !== 'Delete') { return; }
         await manager.deleteCollection(item.collection.id);
@@ -67,8 +66,8 @@ export function registerCollectionCommands(
         const collections = manager.getCollections();
 
         // Step 1: pick or create collection
-        type CollectionQuickPickItem = vscode.QuickPickItem & { id?: string };
-        const collectionItems: CollectionQuickPickItem[] = [
+        type CQP = vscode.QuickPickItem & { id?: string };
+        const items: CQP[] = [
           { label: '$(add) New collection…', id: '__new__' },
           ...collections.map((c) => ({
             label: c.name,
@@ -77,9 +76,7 @@ export function registerCollectionCommands(
           })),
         ];
 
-        const picked = await vscode.window.showQuickPick(collectionItems, {
-          placeHolder: 'Save to collection…',
-        });
+        const picked = await vscode.window.showQuickPick(items, { placeHolder: 'Save to collection…' });
         if (!picked) { return; }
 
         let collectionId = picked.id!;
